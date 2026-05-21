@@ -30,45 +30,56 @@ def predict(inputs, weights, bias):
         total += inputs[i] * weights[i]
     return activation(total)
 
-def train_three_input():
-    N = 8
-    EPOCHS = 100
-    LEARNING_RATE = 0.1
+def _read_dataset(filename):
+    X = []
+    with open(filename, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split()
+            if len(parts) >= FEATURES:
+                xi = [int(p) for p in parts[:FEATURES]]
+                X.append(xi)
+    return X
 
-    inputs = [
-        [0, 0, 0], [0, 0, 1],
-        [0, 1, 0], [0, 1, 1],
-        [1, 0, 0], [1, 0, 1],
-        [1, 1, 0], [1, 1, 1],
-    ]
+def save_weights(filename, weights, bias):
+    with open(filename, 'w') as f:
+        for i, w in enumerate(weights, start=1):
+            f.write(f"Peso {i}: {w}\n")
+        f.write(f"Bias: {bias}\n")
 
-    expected = []
-    for x in inputs:
-        sole, tempo, stanco = x
-        expected.append(1 if ((tempo == 1 and stanco == 0) or (sole == 1 and stanco == 0)) else 0)
-
-    weights = [0.0, 0.0, 0.0]
+def train_concert(epochs=100, learning_rate=0.1, save_file='data.txt'):
+    X = _read_dataset('training_data.txt')
+    Y = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]
+    weights = [0.0 for _ in range(FEATURES)]
     bias = 0.0
 
-    for epoch in range(EPOCHS):
-        for i in range(N):
+    for epoch in range(epochs):
+        for xi, yi in zip(X, Y):
             total = bias
-            for j in range(3):
-                total += weights[j] * inputs[i][j]
+            for j in range(FEATURES):
+                total += weights[j] * xi[j]
             output = activation(total)
-            error = expected[i] - output
-            for j in range(3):
-                weights[j] += LEARNING_RATE * error * inputs[i][j]
-            bias += LEARNING_RATE * error
+            error = yi - output
+            for j in range(FEATURES):
+                weights[j] += learning_rate * error * xi[j]
+            bias += learning_rate * error
 
     print("Pesi allenati:")
     for i, w in enumerate(weights):
-        print(f"Peso {i}: {w}")
-    print(f"Bias: {bias}\n")
+        print(f"Peso {i}: {w:.6f}")
+    print(f"Bias: {bias:.6f}\n")
+
     print("Test del percettrone:")
-    for i, x in enumerate(inputs):
+    for xi, yi in zip(X, Y):
         total = bias
-        for j in range(3):
-            total += weights[j] * x[j]
-        output = activation(total)
-        print(f"Input [{x[0]}, {x[1]}, {x[2]}] => Correre: {output} (Atteso: {expected[i]})")
+        for j in range(FEATURES):
+            total += weights[j] * xi[j]
+        out = activation(total)
+        print(f"Input {xi} => Vai: {out} (Atteso: {yi})")
+
+    save_weights(save_file, weights, bias)
+    print(f"PesI salvati in: {save_file}")
+    return weights, bias
+

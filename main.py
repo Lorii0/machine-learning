@@ -42,9 +42,12 @@ def run_concert_decision():
 
 
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == "train":
-        percettrone.train_three_input()
-        return 0
+    if len(sys.argv) > 1:
+        cmd = sys.argv[1]
+
+        if cmd == "train":
+            percettrone.train_concert(epochs=200, learning_rate=0.1, save_file='data.txt')
+            return 0
     return run_concert_decision()
 
 
